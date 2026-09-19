@@ -1,7 +1,7 @@
 {
   "name": "dsh-uyghurche-ui",
-  "version": "0.1.0",
-  "description": "DSH Web GUI Uyghur (UEY) interface language pack: registers ئۇيغۇرچە through the official locale API (ctx.locale.addLanguage + register) with per-key English fallback — 1,069 keys across all official UI namespaces except trajectory, plus full-UI RTL mirroring and Intl locale hooks.",
+  "version": "0.1.1",
+  "description": "DSH Web GUI Uyghur (UEY) interface language pack: registers ئۇيغۇرچە through the official locale API (ctx.locale.addLanguage + register) with per-key English fallback — 1,069 keys across all official UI namespaces except trajectory, RTL mirroring scoped to the conversation area and the settings dialog (both sidebars keep LTR), and Intl locale hooks.",
   "type": "module",
   "main": "lib/index.js",
   "license": "MIT",

@@ -218,16 +218,22 @@ assert(new Intl.DateTimeFormat('en-US').resolvedOptions().locale === 'en-US', '�
 // 相对时间（ICU 有 ug 数据）
 assert(new Intl.RelativeTimeFormat().resolvedOptions().locale === 'ug', '裸 RelativeTimeFormat 默认切到 ug')
 
-console.log('B1 RTL 钩子:')
+console.log('B1 RTL 钩子（只镜像内容面，两侧栏保持 LTR）:')
 const hasLog = (type, key, value) => docLog.some(([t, k, v]) => t === type && k === key && v === value)
-assert(hasLog('dir.set', 'dir', 'rtl'), 'ug 激活时 <html> 设置 dir=rtl', JSON.stringify(docLog))
+// 断言只看规则：CSS 注释里会提到 _sidebarCol / data-rightbar-col 这些“反面词”，
+// 注释随 <style> 一起内联，直接 includes 会误报。
+const rtlRules = fakeStyleEl.textContent.replace(/\/\*[\s\S]*?\*\//g, '')
+assert(!hasLog('dir.set', 'dir', 'rtl'), '不给 <html> 设 dir=rtl（否则三轨 grid 换边、侧栏翻到对面）', JSON.stringify(docLog))
 assert(docLog.some(([t]) => t === 'head.append'), 'RTL 覆盖层 <style> 已注入')
-assert(fakeStyleEl.textContent.includes('html[dir="rtl"]'), '注入的样式含 [dir=rtl] 选择器')
-assert(fakeStyleEl.textContent.includes('[data-rightbar-col]'), '注入的样式含右栏面板锚点')
-assert(fakeStyleEl.textContent.includes('_collapseGlyph'), '注入的样式含折叠箭头修正')
-// 切回 zh → 移除 dir 与样式
+assert(rtlRules.includes('[class*="_centerCol"]'), '注入的样式以中栏 _centerCol 为锚点')
+assert(rtlRules.includes('[role="dialog"][aria-modal="true"]'), '注入的样式含设置模态锚点（设置模态挂在侧栏槽里，只锚中栏会漏）')
+assert(rtlRules.includes('direction: rtl'), '注入的样式含 direction: rtl')
+assert(!rtlRules.includes('_sidebarCol'), '不再补偿左栏（侧栏保持 LTR）')
+assert(!rtlRules.includes('data-rightbar-col'), '不再补偿右栏（侧栏保持 LTR）')
+assert(!rtlRules.includes('_collapseGlyph'), '不再做折叠箭头双重翻转修正')
+assert(!rtlRules.includes('_handle'), '不再隐藏列宽拖拽手柄（侧栏未换边，手柄可用）')
+// 切回 zh → 移除样式
 rt.setLocale('zh')
-assert(docLog.some(([t, k]) => t === 'dir.remove' && k === 'dir'), '切回 zh 时移除 dir', JSON.stringify(docLog))
 assert(docLog.some(([t]) => t === 'style.remove'), '切回 zh 时移除 <style>')
 rt.setLocale('ug') // 恢复 ug 供后续卸载断言使用
 
@@ -240,7 +246,7 @@ assert(rt.getLocale().active === 'zh', '活动语言回退到浏览器默认 zh-
 // Intl 钩子已还原
 assert(new Intl.DateTimeFormat().resolvedOptions().locale === beforeIntlLocale, 'dispose 后 Intl 默认 locale 恢复', new Intl.DateTimeFormat().resolvedOptions().locale)
 // RTL 钩子已还原
-assert(docLog.filter(([t, k]) => t === 'dir.remove' && k === 'dir').length >= 1, 'dispose 后移除 dir', JSON.stringify(docLog))
+assert(docLog.filter(([t]) => t === 'style.remove').length >= 1, 'dispose 后移除 <style>', JSON.stringify(docLog))
 
 console.log(failed ? `\n✗ ${failed} 项失败` : '\n全部通过')
 process.exit(failed ? 1 : 0)

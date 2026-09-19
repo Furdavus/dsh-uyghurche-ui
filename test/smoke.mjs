@@ -42,7 +42,16 @@ assert(client.includes("locale.register(ns, 'ug'"), '循环注册 ug 字典')
 assert(client.includes("installUgIntl"), '含 C 级 Intl 钩子')
 assert(client.includes("installRtl"), '含 B1 RTL 钩子')
 assert(client.includes('var RTL_CSS = '), '内联 RTL 覆盖层 CSS')
-assert(client.includes("data-rightbar-col"), 'RTL CSS 含右栏面板锚点')
+// 从 bundle 里取出内联 CSS，去掉注释后再断言：注释里会提到 _sidebarCol 等“反面词”，
+// 直接 includes 会误报。
+let rtlCss = ''
+try {
+  rtlCss = JSON.parse(client.match(/var RTL_CSS = (.*)\r?\n/)[1]).replace(/\/\*[\s\S]*?\*\//g, '')
+} catch { /* 断言会以空串失败并报出 */ }
+assert(rtlCss.includes('[class*="_centerCol"]'), 'RTL CSS 锚定中栏 _centerCol')
+assert(rtlCss.includes('[role="dialog"][aria-modal="true"]'), 'RTL CSS 锚定设置模态（aria-modal）')
+assert(!rtlCss.includes('_sidebarCol') && !rtlCss.includes('data-rightbar-col'), 'RTL CSS 不锚定两侧栏（侧栏保持 LTR）')
+assert(!rtlCss.includes('html[dir="rtl"]'), 'RTL CSS 不再依赖 <html dir=rtl>（否则三轨 grid 换边）')
 assert(client.includes("'common': ugCommon"), 'UG_DICTS 含 common')
 assert(client.includes("'settings.locale': ugSettingsLocale"), 'UG_DICTS 含 settings.locale')
 assert(client.includes("'conversation': ugConversation"), 'UG_DICTS 含 conversation')

@@ -1,86 +1,60 @@
-/* dsh-uyghurche-ui RTL 覆盖层（B1 级：全界面文字方向与对齐）
- * 仅在 <html dir="rtl"> 时生效；切换语言或卸载插件时整个 <style> 会被移除。
- * 选择器锚点：
- *   - 唯一类名后缀（哈希前缀下的 CSS Module 原始名，跨上游重建稳定）
- *   - [data-rightbar-col] 结构属性（dsh-client-ui-layout 输出）
- * 已知限制（见 README）：拖拽手柄在 RTL 下隐藏；图标镜像属 B2 不做。 */
+/* dsh-uyghurche-ui RTL 覆盖层（B1 收窄版：只镜像内容面，侧栏保持 LTR）
+ *
+ * 范围（两个锚点）：
+ *   1. _centerCol —— 中栏：对话区，以及挂在 main 槽上的面板；
+ *   2. [role="dialog"][aria-modal="true"] —— 设置界面等模态。
+ *      设置模态是 position:fixed 的全屏浮层（dsh-client-ui-settings-general），
+ *      DOM 上挂在侧栏的 sidebar.settings 槽里、视觉上盖满全屏——所以只锚中栏会漏掉它，
+ *      而按 aria 语义取锚点比按哈希类名稳。
+ * 两侧栏（_sidebarCol / [data-rightbar-col]）不在范围内：不换边、不做任何补偿。
+ *
+ * 实现：不给 <html> 设 dir。设 dir 会让 AppFrame 的三轨 grid 整体换边，
+ * 左栏被翻到屏幕右侧，再想“只留侧栏 LTR”就得逐个补偿 grid 定位，脆弱且没必要。
+ * 改为把 direction:rtl 打在上面两个锚点上：direction 是可继承属性，效果等价于
+ * 在该子树设 dir="rtl"；纯 CSS 命中，React 重渲染/重挂载都不会掉。
+ *
+ * 锚点核对：<hash>_centerCol 仅由 dsh-client-ui-layout 定义
+ * （scripts/audit-class-suffixes.mjs）；aria-modal 由设置模态自己输出。
+ * 仅在 ug 激活时注入本 <style>；切走或卸载时整个 <style> 被移除。
+ *
+ * 已知限制（见 README）：图标镜像属 B2 不做；中栏与模态以外的浮层
+ * （toast、非模态菜单等）保持 LTR。 */
 
-/* ---- 基础：文字方向与对齐 ---- */
-html[dir="rtl"] body {
+/* ---- 内容面：文字方向与对齐（direction 可继承到全部后代） ---- */
+:is([class*="_centerCol"], [role="dialog"][aria-modal="true"]) {
   direction: rtl;
-  text-align: start;
+  unicode-bidi: isolate;
 }
 
-/* ---- 维语字体栈 ---- */
-html[dir="rtl"] body {
+/* ---- 维语字体栈：作用于全界面，含两侧栏的维语文案 ---- */
+html body {
   font-family: "UKIJ Tuz", "Alkatip Tor", "Microsoft Uighur", "Noto Sans Arabic",
     system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-/* ---- LTR 反向保护：代码、终端、编辑器、输入控件 ---- */
-html[dir="rtl"] pre,
-html[dir="rtl"] code,
-html[dir="rtl"] .xterm,
-html[dir="rtl"] .xterm *,
-html[dir="rtl"] .cm-editor,
-html[dir="rtl"] .cm-editor *,
-html[dir="rtl"] input,
-html[dir="rtl"] textarea {
+/* ---- LTR 反向保护：代码、终端、编辑器、输入控件（内容面内） ---- */
+:is([class*="_centerCol"], [role="dialog"][aria-modal="true"]) :is(
+  pre,
+  code,
+  .xterm,
+  .xterm *,
+  .cm-editor,
+  .cm-editor *,
+  input,
+  textarea
+) {
   direction: ltr;
   text-align: left;
   unicode-bidi: isolate;
 }
 
-/* ---- 侧边栏列：grid 翻转后边框换边（_sidebarCol 仅 dsh-client-ui-layout 使用） ---- */
-html[dir="rtl"] [class*="_sidebarCol"] {
-  border-right: none;
-  border-left: .5px solid var(--dsw-alias-border-l3);
-}
-
-/* ---- 右栏面板：RTL 下右栏轨道落到屏幕左侧，面板锚定与滑入方向翻转 ---- */
-html[dir="rtl"] [data-rightbar-col] [class*="_panel"] {
-  right: auto;
-  left: 0;
-  transform: translate(-100%);
-  border-left: none;
-  border-right: .5px solid var(--dsw-alias-border-l3);
-}
-
-/* ---- 折叠箭头：LTR 的 scaleX(-1) 在 RTL 下双重翻转，恢复原形 ---- */
-html[dir="rtl"] [class*="_collapseGlyph"] {
-  transform: none;
-}
-
-/* ---- 拖拽手柄：几何在 JS 里按物理 left 计算，RTL 下不可用 → 隐藏（列宽不可拖） ---- */
-html[dir="rtl"] [class*="_handle"] {
-  display: none;
-}
-
-/* ---- 侧边栏 logo 行与区域：物理 padding/margin 换向 ---- */
-html[dir="rtl"] [class*="_logoRow"] {
-  justify-content: flex-start;
-  padding: 8px 4px 8px 0;
-}
-html[dir="rtl"] [class*="_regionArea"] {
-  margin-left: calc(-1 * var(--dsh-sidebar-inline-padding, 8px));
-  margin-right: -4px;
-  padding-left: 0;
-  padding-right: 4px;
-}
-
 /* ---- 聊天消息选中标记：inset 物理值换向（_mark 仅 dsh-client-ui-chat 使用） ---- */
-html[dir="rtl"] [class*="_mark"] {
+:is([class*="_centerCol"], [role="dialog"][aria-modal="true"]) [class*="_mark"] {
   inset: 0 auto 0 0;
 }
 
-/* ---- 重试按钮边距换向（_retry 出现在 5 个包，均为小型重试按钮） ---- */
-html[dir="rtl"] [class*="_retry"] {
+/* ---- 重试按钮边距换向（_retry 出现在 attachment / commands） ---- */
+:is([class*="_centerCol"], [role="dialog"][aria-modal="true"]) [class*="_retry"] {
   margin-left: 0;
   margin-right: 8px;
-}
-
-/* ---- 会话列表渐隐：left/right 换向（_fade 仅 dsh-client-ui-workspace 使用） ---- */
-html[dir="rtl"] [class*="_fade"] {
-  left: var(--dsh-session-list-edge-inset, 0);
-  right: 0;
 }
