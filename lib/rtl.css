@@ -1,0 +1,86 @@
+/* dsh-uyghurche-ui RTL 覆盖层（B1 级：全界面文字方向与对齐）
+ * 仅在 <html dir="rtl"> 时生效；切换语言或卸载插件时整个 <style> 会被移除。
+ * 选择器锚点：
+ *   - 唯一类名后缀（哈希前缀下的 CSS Module 原始名，跨上游重建稳定）
+ *   - [data-rightbar-col] 结构属性（dsh-client-ui-layout 输出）
+ * 已知限制（见 README）：拖拽手柄在 RTL 下隐藏；图标镜像属 B2 不做。 */
+
+/* ---- 基础：文字方向与对齐 ---- */
+html[dir="rtl"] body {
+  direction: rtl;
+  text-align: start;
+}
+
+/* ---- 维语字体栈 ---- */
+html[dir="rtl"] body {
+  font-family: "UKIJ Tuz", "Alkatip Tor", "Microsoft Uighur", "Noto Sans Arabic",
+    system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* ---- LTR 反向保护：代码、终端、编辑器、输入控件 ---- */
+html[dir="rtl"] pre,
+html[dir="rtl"] code,
+html[dir="rtl"] .xterm,
+html[dir="rtl"] .xterm *,
+html[dir="rtl"] .cm-editor,
+html[dir="rtl"] .cm-editor *,
+html[dir="rtl"] input,
+html[dir="rtl"] textarea {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: isolate;
+}
+
+/* ---- 侧边栏列：grid 翻转后边框换边（_sidebarCol 仅 dsh-client-ui-layout 使用） ---- */
+html[dir="rtl"] [class*="_sidebarCol"] {
+  border-right: none;
+  border-left: .5px solid var(--dsw-alias-border-l3);
+}
+
+/* ---- 右栏面板：RTL 下右栏轨道落到屏幕左侧，面板锚定与滑入方向翻转 ---- */
+html[dir="rtl"] [data-rightbar-col] [class*="_panel"] {
+  right: auto;
+  left: 0;
+  transform: translate(-100%);
+  border-left: none;
+  border-right: .5px solid var(--dsw-alias-border-l3);
+}
+
+/* ---- 折叠箭头：LTR 的 scaleX(-1) 在 RTL 下双重翻转，恢复原形 ---- */
+html[dir="rtl"] [class*="_collapseGlyph"] {
+  transform: none;
+}
+
+/* ---- 拖拽手柄：几何在 JS 里按物理 left 计算，RTL 下不可用 → 隐藏（列宽不可拖） ---- */
+html[dir="rtl"] [class*="_handle"] {
+  display: none;
+}
+
+/* ---- 侧边栏 logo 行与区域：物理 padding/margin 换向 ---- */
+html[dir="rtl"] [class*="_logoRow"] {
+  justify-content: flex-start;
+  padding: 8px 4px 8px 0;
+}
+html[dir="rtl"] [class*="_regionArea"] {
+  margin-left: calc(-1 * var(--dsh-sidebar-inline-padding, 8px));
+  margin-right: -4px;
+  padding-left: 0;
+  padding-right: 4px;
+}
+
+/* ---- 聊天消息选中标记：inset 物理值换向（_mark 仅 dsh-client-ui-chat 使用） ---- */
+html[dir="rtl"] [class*="_mark"] {
+  inset: 0 auto 0 0;
+}
+
+/* ---- 重试按钮边距换向（_retry 出现在 5 个包，均为小型重试按钮） ---- */
+html[dir="rtl"] [class*="_retry"] {
+  margin-left: 0;
+  margin-right: 8px;
+}
+
+/* ---- 会话列表渐隐：left/right 换向（_fade 仅 dsh-client-ui-workspace 使用） ---- */
+html[dir="rtl"] [class*="_fade"] {
+  left: var(--dsh-session-list-edge-inset, 0);
+  right: 0;
+}

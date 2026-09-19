@@ -1,0 +1,4 @@
+# dsh bundle patch: inserts the Uyghur UI language pack into a profile's layer stack.
+- insert:
+    - id: uyghur-ui
+      name: 'dsh-uyghurche-ui'
